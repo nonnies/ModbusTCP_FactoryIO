@@ -194,7 +194,7 @@ namespace ModbusTCP
                 MessageBox.Show("Please start the connection first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
+        
         private async void btnStartProgram_Click(object sender, EventArgs e)
         {
             if(lblStatus.Text == "Status : Running")
@@ -212,7 +212,7 @@ namespace ModbusTCP
 
         private void btnReset_Click(object sender, EventArgs e)
         {
-            ModbusTcp.Reset();
+           ModbusTcp.Reset();
         }
     }
 }
