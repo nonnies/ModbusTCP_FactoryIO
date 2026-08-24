@@ -214,5 +214,12 @@ namespace ModbusTCP
         {
            ModbusTcp.Reset();
         }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            // request the Modbus loop to stop
+            ModbusTcp.RequestStop();
+
+        }
     }
 }

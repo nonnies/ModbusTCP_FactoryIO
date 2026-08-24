@@ -36,6 +36,10 @@ namespace ModbusTCP
                 }
             }
         }
+        public static void RequestStop()
+        {
+            stopRequested = true;
+        }
 
         public static bool[] ModbusTcpMasterReadInputs(ushort registerAdr)
         {
@@ -137,7 +141,7 @@ namespace ModbusTCP
                 Console.WriteLine("Start the program, conveyor starting...");
                 master.WriteSingleCoil(1, startAddress, true);
 
-                while (true)
+                while (!stopRequested)
                 {
                     bool[] inputs = master.ReadInputs(1, startAddress, 2);
                     Console.WriteLine("Checking...");
@@ -177,14 +181,38 @@ namespace ModbusTCP
             }
         }
         
-
-        public static void AssemblyBox()
+        public static ushort ContinuousReadCount()
         {
-            if (client != null)
+            if (client == null) return 0;
+            try
             {
                 var factory = new ModbusFactory();
                 IModbusMaster master = factory.CreateMaster(client);
-                
+
+                ushort[] count = master.ReadHoldingRegisters(1, 0, 1);
+                return count[0];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ContinuousReadCount failed: {ex}");
+                return 0;
+            }
+        }
+
+
+        public static void AssemblyBox()
+        {
+            if (client == null)
+            {
+                Console.WriteLine("TCP client is not initialized.");
+                return;
+            }
+
+            try
+            {
+                var factory = new ModbusFactory();
+                IModbusMaster master = factory.CreateMaster(client);
+
                 ushort startAddress = 0;
                 ushort numInputs = 15;
                 // coil addresses for the assembly box process
@@ -197,62 +225,52 @@ namespace ModbusTCP
                 ushort BaseConveyor = 6;
                 ushort ClampBase = 7;
                 ushort PosRaiseBase = 8;
-                // input addresses for the assembly box process
+                // input addresses for the assembly box process (zero-based index into the inputs[] array)
                 ushort LidAtPlace = 3;
                 ushort BaseAtPlace = 6;
                 ushort PartLeaving = 9;
 
-
                 bool status = false;
                 ushort counter = 0;
 
-
-                // Clear any previous stop request and start the process
-                stopRequested = false;
                 Console.WriteLine("Starting the assembly box process...");
                 bool LidPlaced = false;
                 bool BasePlaced = false;
 
-                while (true)
+                while (!stopRequested)
                 {
                     status = false;
-                    while (true)
-                    {
-                        bool[] inputs = master.ReadInputs(1, startAddress, numInputs);
-                        Console.WriteLine("Running...");
-                        
-                        if (inputs[LidAtPlace] == true && inputs[BaseAtPlace] == true)
-                        {
 
-                            LidPlaced = true;
-                            BasePlaced = true;
-                            break;
-                           
-                        }
-                        else if (inputs[BaseAtPlace] == true && inputs[LidAtPlace] == false)
-                        {
-                            BasePlaced = true;
-                            LidPlaced = false;
-                            break;
-                        }
-                        else if (inputs[BaseAtPlace] == false && inputs[LidAtPlace] == true)
-                        {
-                            BasePlaced = false;
-                            LidPlaced = true;
-                            break;
-                        }
-                        else
-                        {
-                            LidPlaced = false;
-                            BasePlaced = false;
-                            break;
-                        }
-                    
+                    // Poll inputs once per cycle (breaks immediately to decide flow)
+                    bool[] inputs = master.ReadInputs(1, startAddress, numInputs);
+                    Console.WriteLine("Running...");
+
+                    if (stopRequested) break;
+
+                    if (inputs[LidAtPlace] && inputs[BaseAtPlace])
+                    {
+                        LidPlaced = true; BasePlaced = true;
                     }
+                    else if (inputs[BaseAtPlace] && !inputs[LidAtPlace])
+                    {
+                        BasePlaced = true; LidPlaced = false;
+                    }
+                    else if (!inputs[BaseAtPlace] && inputs[LidAtPlace])
+                    {
+                        BasePlaced = false; LidPlaced = true;
+                    }
+                    else
+                    {
+                        LidPlaced = false; BasePlaced = false;
+                    }
+                    
                     Console.WriteLine($"LidAtPlace: {LidPlaced}, BaseAtPlace: {BasePlaced}]");
 
-                    if (LidPlaced == true && BasePlaced == true)
+                    if (stopRequested) break;
+
+                    if (LidPlaced && BasePlaced)
                     {
+                       
                         status = true;
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, LidConveyor, false);
@@ -276,10 +294,12 @@ namespace ModbusTCP
                         const int timeoutMs = 10000; // maximum wait (10 seconds)
                         int elapsed = 0;
 
-                        while (elapsed < timeoutMs)
+                        while (elapsed < timeoutMs && !stopRequested)
                         {
                             bool[] MovingX = master.ReadInputs(1, 0, 1);
                             Console.WriteLine("Moving X...");
+
+                            if (stopRequested) break;
 
                             if (MovingX[0] == false)
                             {
@@ -290,6 +310,8 @@ namespace ModbusTCP
                             Thread.Sleep(pollIntervalMs);
                             elapsed += pollIntervalMs;
                         }
+
+                        if (stopRequested) break;
 
                         Thread.Sleep(1000);
                         master.WriteSingleCoil(1, MoveZ, true);
@@ -304,50 +326,56 @@ namespace ModbusTCP
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, BaseConveyor, true);
                         master.WriteSingleCoil(1, LidConveyor, true);
-                       
-
                     }
-                    else if (LidPlaced == true && BasePlaced == false)
+                    else if (LidPlaced && !BasePlaced)
                     {
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, LidConveyor, false);
                         master.WriteSingleCoil(1, BaseConveyor, true);
-                        
                     }
-                    else if (LidPlaced == false && BasePlaced == true)
+                    else if (!LidPlaced && BasePlaced)
                     {
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, BaseConveyor, false);
                         master.WriteSingleCoil(1, LidConveyor, true);
-
                     }
                     else
                     {
-                        
                         master.WriteSingleCoil(1, BaseConveyor, true);
                         master.WriteSingleCoil(1, LidConveyor, true);
-                        
                     }
 
-                    
-
-                    while (status)
+                    while (status && !stopRequested)
                     {
-                        bool[] Inputs = master.ReadInputs(1, startAddress , numInputs);
+                        bool[] Inputs = master.ReadInputs(1, startAddress, numInputs);
                         if (Inputs[PartLeaving] == true)
                         {
                             Thread.Sleep(100);
                             master.WriteSingleCoil(1, PosRaiseBase, false);
                             counter++;
+                            Console.WriteLine($"Part counted -> {counter}");
                             break;
                         }
+
+                        Thread.Sleep(50); // throttle poll
                     }
+
                     Thread.Sleep(100);
                     master.WriteSingleRegister(1, 0, counter);
-
                 }
+
+                Console.WriteLine("AssemblyBox: exiting.");
+                Reset();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"AssemblyBox exception: {ex}");
+            }
+            finally
+            {
+                // Ensure stop flag cleared when method completes
+                stopRequested = false;
             }
         }
-        
     }
 }

@@ -31,6 +31,7 @@
             this.btnStart = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnSetCoil = new System.Windows.Forms.Button();
             this.btnViewIn = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.txtRegVal = new System.Windows.Forms.TextBox();
@@ -50,11 +51,19 @@
             this.txtRegAdr = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.cbbRegisterType = new System.Windows.Forms.ComboBox();
-            this.btnSetCoil = new System.Windows.Forms.Button();
-            this.btnStartProgram = new System.Windows.Forms.Button();
             this.btnReset = new System.Windows.Forms.Button();
+            this.btnStartProgram = new System.Windows.Forms.Button();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.lblCount = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.btnStop = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnStart
@@ -62,7 +71,7 @@
             this.btnStart.BackColor = System.Drawing.Color.LimeGreen;
             this.btnStart.Font = new System.Drawing.Font("SimSun", 15F, System.Drawing.FontStyle.Bold);
             this.btnStart.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnStart.Location = new System.Drawing.Point(43, 27);
+            this.btnStart.Location = new System.Drawing.Point(40, 26);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(553, 101);
             this.btnStart.TabIndex = 0;
@@ -75,7 +84,7 @@
             this.lblStatus.AutoSize = true;
             this.lblStatus.Cursor = System.Windows.Forms.Cursors.Default;
             this.lblStatus.Font = new System.Drawing.Font("SimSun", 12F);
-            this.lblStatus.Location = new System.Drawing.Point(44, 409);
+            this.lblStatus.Location = new System.Drawing.Point(41, 408);
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(135, 16);
             this.lblStatus.TabIndex = 1;
@@ -83,8 +92,6 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.btnReset);
-            this.groupBox1.Controls.Add(this.btnStartProgram);
             this.groupBox1.Controls.Add(this.btnSetCoil);
             this.groupBox1.Controls.Add(this.btnViewIn);
             this.groupBox1.Controls.Add(this.label3);
@@ -95,12 +102,22 @@
             this.groupBox1.Controls.Add(this.txtRegAdr);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.cbbRegisterType);
-            this.groupBox1.Location = new System.Drawing.Point(44, 150);
+            this.groupBox1.Location = new System.Drawing.Point(41, 149);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(552, 256);
             this.groupBox1.TabIndex = 3;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Change Data";
+            // 
+            // btnSetCoil
+            // 
+            this.btnSetCoil.Location = new System.Drawing.Point(221, 148);
+            this.btnSetCoil.Name = "btnSetCoil";
+            this.btnSetCoil.Size = new System.Drawing.Size(93, 37);
+            this.btnSetCoil.TabIndex = 10;
+            this.btnSetCoil.Text = "Set Coil";
+            this.btnSetCoil.UseVisualStyleBackColor = true;
+            this.btnSetCoil.Click += new System.EventHandler(this.btnSetCoil_Click);
             // 
             // btnViewIn
             // 
@@ -282,44 +299,105 @@
             this.cbbRegisterType.Size = new System.Drawing.Size(170, 20);
             this.cbbRegisterType.TabIndex = 0;
             // 
-            // btnSetCoil
-            // 
-            this.btnSetCoil.Location = new System.Drawing.Point(221, 148);
-            this.btnSetCoil.Name = "btnSetCoil";
-            this.btnSetCoil.Size = new System.Drawing.Size(93, 37);
-            this.btnSetCoil.TabIndex = 10;
-            this.btnSetCoil.Text = "Set Coil";
-            this.btnSetCoil.UseVisualStyleBackColor = true;
-            this.btnSetCoil.Click += new System.EventHandler(this.btnSetCoil_Click);
-            // 
-            // btnStartProgram
-            // 
-            this.btnStartProgram.Location = new System.Drawing.Point(428, 207);
-            this.btnStartProgram.Name = "btnStartProgram";
-            this.btnStartProgram.Size = new System.Drawing.Size(117, 37);
-            this.btnStartProgram.TabIndex = 11;
-            this.btnStartProgram.Text = "Start Program";
-            this.btnStartProgram.UseVisualStyleBackColor = true;
-            this.btnStartProgram.Click += new System.EventHandler(this.btnStartProgram_Click);
-            // 
             // btnReset
             // 
-            this.btnReset.Location = new System.Drawing.Point(295, 207);
+            this.btnReset.BackColor = System.Drawing.Color.Yellow;
+            this.btnReset.Location = new System.Drawing.Point(398, 197);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(117, 37);
             this.btnReset.TabIndex = 12;
             this.btnReset.Text = "Reset";
-            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.UseVisualStyleBackColor = false;
             this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
+            // btnStartProgram
+            // 
+            this.btnStartProgram.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnStartProgram.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.btnStartProgram.Location = new System.Drawing.Point(101, 197);
+            this.btnStartProgram.Name = "btnStartProgram";
+            this.btnStartProgram.Size = new System.Drawing.Size(117, 37);
+            this.btnStartProgram.TabIndex = 11;
+            this.btnStartProgram.Text = "Start Program";
+            this.btnStartProgram.UseVisualStyleBackColor = false;
+            this.btnStartProgram.Click += new System.EventHandler(this.btnStartProgram_Click);
+            // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(1, 0);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(645, 474);
+            this.tabControl1.TabIndex = 4;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.groupBox1);
+            this.tabPage1.Controls.Add(this.btnStart);
+            this.tabPage1.Controls.Add(this.lblStatus);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(637, 448);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.lblCount);
+            this.tabPage2.Controls.Add(this.label4);
+            this.tabPage2.Controls.Add(this.btnStop);
+            this.tabPage2.Controls.Add(this.btnReset);
+            this.tabPage2.Controls.Add(this.btnStartProgram);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(637, 448);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // lblCount
+            // 
+            this.lblCount.AutoSize = true;
+            this.lblCount.Font = new System.Drawing.Font("SimSun", 12F);
+            this.lblCount.Location = new System.Drawing.Point(98, 16);
+            this.lblCount.Name = "lblCount";
+            this.lblCount.Size = new System.Drawing.Size(15, 16);
+            this.lblCount.TabIndex = 15;
+            this.lblCount.Text = "0";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("SimSun", 12F);
+            this.label4.Location = new System.Drawing.Point(29, 16);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(63, 16);
+            this.label4.TabIndex = 14;
+            this.label4.Text = "Count :";
+            // 
+            // btnStop
+            // 
+            this.btnStop.BackColor = System.Drawing.Color.Red;
+            this.btnStop.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.btnStop.Location = new System.Drawing.Point(256, 197);
+            this.btnStop.Name = "btnStop";
+            this.btnStop.Size = new System.Drawing.Size(117, 37);
+            this.btnStop.TabIndex = 13;
+            this.btnStop.Text = "Stop";
+            this.btnStop.UseVisualStyleBackColor = false;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(631, 450);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.btnStart);
+            this.ClientSize = new System.Drawing.Size(645, 476);
+            this.Controls.Add(this.tabControl1);
             this.ForeColor = System.Drawing.SystemColors.ControlText;
             this.Name = "Form1";
             this.Text = "Modbus TCP server";
@@ -327,8 +405,12 @@
             this.groupBox1.PerformLayout();
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            this.tabPage2.ResumeLayout(false);
+            this.tabPage2.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -359,6 +441,12 @@
         private System.Windows.Forms.Button btnSetCoil;
         private System.Windows.Forms.Button btnStartProgram;
         private System.Windows.Forms.Button btnReset;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Button btnStop;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label lblCount;
     }
 }
 
