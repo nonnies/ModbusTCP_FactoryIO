@@ -200,9 +200,12 @@ namespace ModbusTCP
                 // input addresses for the assembly box process
                 ushort LidAtPlace = 3;
                 ushort BaseAtPlace = 6;
+                ushort PartLeaving = 9;
 
 
-                
+                bool status = false;
+                ushort counter = 0;
+
 
                 // Clear any previous stop request and start the process
                 stopRequested = false;
@@ -212,7 +215,7 @@ namespace ModbusTCP
 
                 while (true)
                 {
-                   
+                    status = false;
                     while (true)
                     {
                         bool[] inputs = master.ReadInputs(1, startAddress, numInputs);
@@ -250,9 +253,8 @@ namespace ModbusTCP
 
                     if (LidPlaced == true && BasePlaced == true)
                     {
-                        Thread.Sleep(50);
-                        master.WriteSingleCoil(1, PosRaiseBase, false);
-                        Thread.Sleep(950);
+                        status = true;
+                        Thread.Sleep(500);
                         master.WriteSingleCoil(1, LidConveyor, false);
                         master.WriteSingleCoil(1, BaseConveyor, false);
                         Thread.Sleep(500);
@@ -302,7 +304,7 @@ namespace ModbusTCP
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, BaseConveyor, true);
                         master.WriteSingleCoil(1, LidConveyor, true);
-                        Thread.Sleep(600);
+                       
 
                     }
                     else if (LidPlaced == true && BasePlaced == false)
@@ -329,21 +331,19 @@ namespace ModbusTCP
 
                     
 
-                    while (true)
+                    while (status)
                     {
-                        bool[] partLeaving = master.ReadInputs(1, 9, 1);
-                        if (partLeaving[0] == true || BasePlaced == false || LidPlaced == false)
+                        bool[] Inputs = master.ReadInputs(1, startAddress , numInputs);
+                        if (Inputs[PartLeaving] == true)
                         {
+                            Thread.Sleep(100);
                             master.WriteSingleCoil(1, PosRaiseBase, false);
+                            counter++;
                             break;
                         }
-
-                        Thread.Sleep(50);
                     }
                     Thread.Sleep(100);
-
-
-
+                    master.WriteSingleRegister(1, 0, counter);
 
                 }
             }
