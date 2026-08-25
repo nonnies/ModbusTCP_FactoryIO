@@ -15,9 +15,7 @@ namespace ModbusTCP
 {
     internal class ModbusTcp
     {
-        static TcpClient client;
-        // Shared stop flag so the running background process can be stopped from the UI
-        private static volatile bool stopRequested = false;
+        public static TcpClient client;
         public static void ModbusTcpConnection(string action)
         {
             if (action == "START")
@@ -36,10 +34,6 @@ namespace ModbusTCP
                 }
             }
         }
-        public static void RequestStop()
-        {
-            stopRequested = true;
-        }
 
         public static bool[] ModbusTcpMasterReadInputs(ushort registerAdr)
         {
@@ -49,13 +43,13 @@ namespace ModbusTCP
                 IModbusMaster master = factory.CreateMaster(client);
 
                 // read five input values
-                ushort startAddress = (ushort)(registerAdr - 1);
+                ushort startAddress = registerAdr;
                 ushort numInputs = 5;
                 bool[] inputs = master.ReadInputs(1, startAddress, numInputs);
 
                 for (int i = 0; i < numInputs; i++)
                 {
-                    Console.WriteLine($"Input {(registerAdr + i)}={(inputs[i] ? 1 : 0)}");
+                    Console.WriteLine($"Input {(registerAdr + i)} = {inputs[i]}");
                 }
                 return inputs;
             }
@@ -80,7 +74,7 @@ namespace ModbusTCP
                 var factory = new ModbusFactory();
                 IModbusMaster master = factory.CreateMaster(client);
                 // write a single coil
-                ushort startAddress = (ushort)(registerAdr - 1);
+                ushort startAddress = registerAdr;
                 master.WriteSingleCoil(1, startAddress, value);
                 Console.WriteLine($"Wrote value {value} to coil {registerAdr}");
             }
@@ -99,7 +93,7 @@ namespace ModbusTCP
                 var factory = new ModbusFactory();
                 IModbusMaster master = factory.CreateMaster(client);
                 // write a single holding register
-                ushort startAddress = (ushort)(registerAdr - 1);
+                ushort startAddress = registerAdr;
                 master.WriteSingleRegister(1, startAddress, value);
                 Console.WriteLine($"Wrote value {value} to register {registerAdr}");
             }
@@ -116,7 +110,7 @@ namespace ModbusTCP
                 var factory = new ModbusFactory();
                 IModbusMaster master = factory.CreateMaster(client);
                 ushort numRegisters = 5;
-                ushort startAddress = (ushort)(registerAdr - 1);
+                ushort startAddress = registerAdr;
                 ushort[] values = master.ReadHoldingRegisters(1, startAddress, numRegisters);
                 for (int i = 0; i < numRegisters; i++)
                 {
@@ -130,7 +124,14 @@ namespace ModbusTCP
                 return Array.Empty<ushort>();
             }
         }
-
+        
+    }
+    class Conveyor : ModbusTcp
+    {
+        // Shared stop flag so the running background process can be stopped from the UI
+        private static volatile bool stopRequested = false;
+        // Event raised when the continuous count changes
+        public static event Action<ushort> CountUpdated;
         public static void SimpleConveyor()
         {
             if (client != null)
@@ -162,7 +163,10 @@ namespace ModbusTCP
                 Console.WriteLine("TCP client is not initialized.");
             }
         }
-
+        public static void RequestStop()
+        {
+            stopRequested = true;
+        }
         public static void Reset()
         {
             if (client != null)
@@ -180,27 +184,7 @@ namespace ModbusTCP
                 Console.WriteLine("TCP client is not initialized.");
             }
         }
-        
-        public static ushort ContinuousReadCount()
-        {
-            if (client == null) return 0;
-            try
-            {
-                var factory = new ModbusFactory();
-                IModbusMaster master = factory.CreateMaster(client);
-
-                ushort[] count = master.ReadHoldingRegisters(1, 0, 1);
-                return count[0];
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ContinuousReadCount failed: {ex}");
-                return 0;
-            }
-        }
-
-
-        public static void AssemblyBox()
+        public static void BoxAssembler()
         {
             if (client == null)
             {
@@ -221,7 +205,6 @@ namespace ModbusTCP
                 ushort Grab = 2;
                 ushort LidConveyor = 3;
                 ushort ClampLid = 4;
-                ushort PosRaiseLid = 5;
                 ushort BaseConveyor = 6;
                 ushort ClampBase = 7;
                 ushort PosRaiseBase = 8;
@@ -263,14 +246,14 @@ namespace ModbusTCP
                     {
                         LidPlaced = false; BasePlaced = false;
                     }
-                    
+
                     Console.WriteLine($"LidAtPlace: {LidPlaced}, BaseAtPlace: {BasePlaced}]");
 
                     if (stopRequested) break;
 
                     if (LidPlaced && BasePlaced)
                     {
-                       
+
                         status = true;
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, LidConveyor, false);
@@ -284,7 +267,6 @@ namespace ModbusTCP
                         master.WriteSingleCoil(1, Grab, true);
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, ClampLid, false);
-                        master.WriteSingleCoil(1, ClampBase, false);
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, MoveZ, false);
                         Thread.Sleep(500);
@@ -320,6 +302,7 @@ namespace ModbusTCP
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, MoveZ, false);
                         Thread.Sleep(500);
+                        master.WriteSingleCoil(1, ClampBase, false);
                         master.WriteSingleCoil(1, MoveX, false);
                         Thread.Sleep(500);
                         master.WriteSingleCoil(1, PosRaiseBase, true);
@@ -354,6 +337,8 @@ namespace ModbusTCP
                             master.WriteSingleCoil(1, PosRaiseBase, false);
                             counter++;
                             Console.WriteLine($"Part counted -> {counter}");
+                            // notify UI about the new counter value
+                            CountUpdated?.Invoke(counter);
                             break;
                         }
 

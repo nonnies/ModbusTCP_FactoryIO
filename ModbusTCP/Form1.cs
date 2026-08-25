@@ -17,6 +17,9 @@ namespace ModbusTCP
         public Form1()
         {
             InitializeComponent();
+
+            // subscribe to count updates from ModbusTcp
+            Conveyor.CountUpdated += ModbusTcp_CountUpdated;
         }
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -194,13 +197,25 @@ namespace ModbusTCP
                 MessageBox.Show("Please start the connection first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
+        private void ModbusTcp_CountUpdated(ushort count)
+        {
+            // marshal update to UI thread
+            if (lblCount.InvokeRequired)
+            {
+                lblCount.BeginInvoke((Action)(() => lblCount.Text = count.ToString()));
+            }
+            else
+            {
+                lblCount.Text = count.ToString();
+            }
+        }
+
         private async void btnStartProgram_Click(object sender, EventArgs e)
         {
             if(lblStatus.Text == "Status : Running")
             {
                 btnStartProgram.Enabled = false;
-                await Task.Run(() => { ModbusTcp.AssemblyBox(); } );
+                await Task.Run(() => { Conveyor.BoxAssembler(); } );
             }
             else
             {
@@ -212,14 +227,21 @@ namespace ModbusTCP
 
         private void btnReset_Click(object sender, EventArgs e)
         {
-           ModbusTcp.Reset();
+            Conveyor.Reset();
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
             // request the Modbus loop to stop
-            ModbusTcp.RequestStop();
+            Conveyor.RequestStop();
 
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            // unsubscribe to avoid leaks
+            Conveyor.CountUpdated -= ModbusTcp_CountUpdated;
+            base.OnFormClosed(e);
         }
     }
 }
