@@ -59,11 +59,15 @@
             this.lblCount = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.btnStartProgram2 = new System.Windows.Forms.Button();
+            this.btnStop2 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnStart
@@ -326,6 +330,7 @@
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(1, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -342,7 +347,7 @@
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(637, 448);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.Text = "Read/Write";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabPage2
@@ -357,7 +362,7 @@
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(637, 448);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.Text = "Assembler";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // lblCount
@@ -392,6 +397,38 @@
             this.btnStop.UseVisualStyleBackColor = false;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.btnStop2);
+            this.tabPage3.Controls.Add(this.btnStartProgram2);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(637, 448);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Palletizer&Warehouse";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // btnStartProgram2
+            // 
+            this.btnStartProgram2.Location = new System.Drawing.Point(168, 198);
+            this.btnStartProgram2.Name = "btnStartProgram2";
+            this.btnStartProgram2.Size = new System.Drawing.Size(110, 47);
+            this.btnStartProgram2.TabIndex = 0;
+            this.btnStartProgram2.Text = "StartProgram";
+            this.btnStartProgram2.UseVisualStyleBackColor = true;
+            this.btnStartProgram2.Click += new System.EventHandler(this.btnStartProgram2_Click);
+            // 
+            // btnStop2
+            // 
+            this.btnStop2.Location = new System.Drawing.Point(322, 198);
+            this.btnStop2.Name = "btnStop2";
+            this.btnStop2.Size = new System.Drawing.Size(110, 47);
+            this.btnStop2.TabIndex = 1;
+            this.btnStop2.Text = "Stop";
+            this.btnStop2.UseVisualStyleBackColor = true;
+            this.btnStop2.Click += new System.EventHandler(this.btnStop2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -410,6 +447,7 @@
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -447,6 +485,9 @@
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label lblCount;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.Button btnStartProgram2;
+        private System.Windows.Forms.Button btnStop2;
     }
 }
 

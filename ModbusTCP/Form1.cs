@@ -1,19 +1,23 @@
-﻿using System;
+﻿using NModbus;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using NModbus;
 
 namespace ModbusTCP
 {
 
     public partial class Form1 : Form
     {
+        // keep palletizer instance so we can stop it later
+        private Palletizer _palletizer = new Palletizer();
+        CancellationTokenSource _cts = new CancellationTokenSource();
         public Form1()
         {
             InitializeComponent();
@@ -30,7 +34,6 @@ namespace ModbusTCP
                 btnStart.BackColor = Color.Red;
                 lblStatus.Text = "Status : Running";
                 ModbusTcp.ModbusTcpConnection("START");
-
             }
             else
             {
@@ -242,6 +245,25 @@ namespace ModbusTCP
             // unsubscribe to avoid leaks
             Conveyor.CountUpdated -= ModbusTcp_CountUpdated;
             base.OnFormClosed(e);
+        }
+
+        private async void btnStartProgram2_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            Task _boxFeederTask =  _palletizer.BoxFeederAsync(_cts.Token);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask);
+        }
+
+        private void btnStop2_Click(object sender, EventArgs e)
+        {
+            _cts?.Cancel();
+            _palletizer?.StopProgram();
+
+            _cts?.Dispose();
+            _cts = null;
         }
     }
 }
