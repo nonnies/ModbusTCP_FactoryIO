@@ -44,7 +44,8 @@ namespace ModbusTCP
             {
                 ushort startAddress = 0;
                 Console.WriteLine("Resetting the process...");
-                master.WriteMultipleCoils(1, startAddress, Enumerable.Repeat(false, 12).ToArray()); // Assuming 12 coils to stop
+                master.WriteMultipleCoils(1, startAddress, Enumerable.Repeat(false, 20).ToArray()); // Assuming 12 coils to stop
+                master.WriteMultipleRegisters(1, startAddress, Enumerable.Repeat((ushort) 0, 20).ToArray());
                 Console.WriteLine($"Process reset.");
                
             }
