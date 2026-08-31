@@ -255,8 +255,10 @@ namespace ModbusTCP
             Task _boxFeederTask =  _palletizer.BoxFeederAsync(_cts.Token);
             Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
             Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
             Task _craneTask = _palletizer.CraneAsync(_cts.Token); 
-            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask);
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
         }
 
         private void btnStop2_Click(object sender, EventArgs e)
