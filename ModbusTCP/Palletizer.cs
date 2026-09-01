@@ -262,15 +262,15 @@ namespace ModbusTCP
                 Console.WriteLine("TCP client is not initialized.");
                 return;
             }
-
+            //coil address
             ushort exitConveyor = 10;
             ushort turnLoad = 11;
             ushort turn = 13;
-
             ushort craneEntry = 14;
-
+            //input address
             ushort entryTurn = 5;
             ushort atFront = 6;
+
             bool prevEntryTurn = true;
 
             while (!token.IsCancellationRequested && status)
@@ -343,6 +343,7 @@ namespace ModbusTCP
 
         public async Task CraneEntryAsync(CancellationToken token)
         {
+            //coil address
             ushort craneEntry = 14;
             ushort craneLoad = 15;
 
@@ -399,7 +400,7 @@ namespace ModbusTCP
             ushort craneLeft = 16;
             ushort craneRight = 17;
             ushort craneLift = 18;
-
+            //holding register address
             ushort cranePos = 0;
 
             if (client == null)
@@ -567,14 +568,22 @@ namespace ModbusTCP
 
         public async Task EndProgram_1(CancellationToken token)
         {
+            if (client == null)
+            {
+                Console.WriteLine("TCP client is not initialized.");
+                return;
+            }
+
+            //coil address
             ushort loadPallet = 6;
             ushort exitConveyor = 10;
             ushort turnLoad = 11;
             ushort turn = 13;
             ushort craneEntry = 14;
-
+            //input address
             ushort entryTurn = 5;
             ushort atFront = 6;
+
             bool prevEntryTurn = true;
 
             while (!token.IsCancellationRequested)
@@ -639,6 +648,7 @@ namespace ModbusTCP
                 return;
             }
 
+            //coil address
             ushort craneEntry = 14;
             ushort craneLoad = 15;
             ushort craneLeft = 16;
