@@ -15,11 +15,12 @@ namespace ModbusTCP
 {
     internal class Palletizer : ModbusTcp
     {
-        public ushort pos = 54;
+        public ushort pos = 1;
         public bool status = true;
         public bool readyToDrop = false;
         public bool craneReady = true;
         public bool craneLoadEmpty = true;
+        public int palletDone = 0;
         private readonly BlockingCollection<DateTime> _boxEvents = new BlockingCollection<DateTime>();
 
         private async Task PollBoxSensorAsync(ushort boxAtEntry, CancellationToken token)
@@ -37,19 +38,10 @@ namespace ModbusTCP
             const int pollMs = 5;
             const int debounceMs = 50;
 
-            while (!token.IsCancellationRequested && status)
+            while (!token.IsCancellationRequested && palletDone < 55)
             {
                 try
                 {
-                    if (pos >= 55)
-                    {
-                        status = false;
-                        Reset();
-                        await Task.Delay(500);
-                        await EndProgram(token);
-                        return;
-                    }
-
                     bool[] currArr = await master.ReadInputsAsync(1, boxAtEntry, 1).ConfigureAwait(false);
                     bool curr = currArr[0];
 
@@ -91,24 +83,17 @@ namespace ModbusTCP
             ushort countBox = 0;
             ushort countPush = 0;
             int boxMovingPollRate = 10;
+            
 
             try
             {
                 Console.WriteLine("Start Running");
                 // start sensor poller that enqueues falling edges on the thread-pool
                 var pollTask = Task.Run(async () => await PollBoxSensorAsync(boxAtEntry, token));
-
-                while (!token.IsCancellationRequested && status)
+                palletDone++;
+                while (!token.IsCancellationRequested && palletDone < 55)
                 {
-                    if (pos >= 55)
-                    {
-                        status = false;
-                        Reset();
-                        await Task.Delay(500);
-                        await EndProgram(token);
-                        return;
-                    }
-
+                    
                     // ensure actuators are enabled each cycle
                     await master.WriteSingleCoilAsync(1, boxFeeder, true);
                     await master.WriteSingleCoilAsync(1, loadBelt, true);
@@ -146,7 +131,8 @@ namespace ModbusTCP
                         readyToDrop = true;
                         await Task.Delay(3000);
                         await master.WriteSingleCoilAsync(1, clamp, false);
-                        
+                        Console.WriteLine($"Pallet Done: {palletDone}");
+                        palletDone++;
                         countPush = 0;
                     }
                     else
@@ -181,16 +167,8 @@ namespace ModbusTCP
             ushort palletLoaded = 2;
             
 
-            while (!token.IsCancellationRequested && status)
+            while (!token.IsCancellationRequested && palletDone < 55)
             {
-                if (pos >= 55)
-                {
-                    status = false;
-                    Reset();
-                    await Task.Delay(500);
-                    await EndProgram(token);
-                    return;
-                }
 
                 bool[] input = await master.ReadInputsAsync(1, palletAtEn, 1);
                 bool palletEnterd = false;
@@ -297,6 +275,15 @@ namespace ModbusTCP
 
             while (!token.IsCancellationRequested && status)
             {
+                if(pos >= 55)
+                {
+                    status = false;
+                    Reset();
+                    await Task.Delay(500);
+                    await EndProgram(token);
+                    return;
+                }
+
                 bool[] input = await master.ReadInputsAsync(1, entryTurn, 1);
                 bool enteredTurn = !input[0] && prevEntryTurn;
                 prevEntryTurn = input[0];
@@ -311,16 +298,7 @@ namespace ModbusTCP
                     await master.WriteSingleCoilAsync(1, turnLoad, false);
                     await master.WriteSingleCoilAsync(1, exitConveyor, true);
                 }
-
-                if (pos >= 55)
-                {
-                    status = false;
-                    Reset();
-                    await Task.Delay(500);
-                    await EndProgram(token);
-                    return;
-                }
-
+  
                 while (enteredTurn && !token.IsCancellationRequested)
                 {
                     bool[] input2 = await master.ReadInputsAsync(1, atFront, 1);
@@ -359,7 +337,6 @@ namespace ModbusTCP
 
                 }
                 
-
                 await Task.Delay(10);
             }
         }
@@ -462,8 +439,6 @@ namespace ModbusTCP
                     await master.WriteSingleCoilAsync(1, craneLeft, false);
                 }
 
-                
-
                 if (lifted)
                 {
                     // Wait for final motion to start and stop (debounced)
@@ -524,7 +499,6 @@ namespace ModbusTCP
                         await Task.Delay(100);
                     }
 
-                    
                     await master.WriteSingleCoilAsync(1, craneRight, true);
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneLift, false);
@@ -577,33 +551,93 @@ namespace ModbusTCP
                                 break;
                             }
                         }
-
                         await Task.Delay(100);
+
                     }
                     pos++;
                     craneReady = true;
 
-                   
-
                 }
                 await Task.Delay(10);
+
             }
             status = false;
 
         }
 
-        public async Task EndProgram(CancellationToken token)
+        public async Task EndProgram_1(CancellationToken token)
         {
+            ushort loadPallet = 6;
+            ushort exitConveyor = 10;
+            ushort turnLoad = 11;
+            ushort turn = 13;
+            ushort craneEntry = 14;
+
+            ushort entryTurn = 5;
+            ushort atFront = 6;
+            bool prevEntryTurn = true;
+
+            while (!token.IsCancellationRequested)
+            {
+                await master.WriteSingleCoilAsync(1, turnLoad, true);
+                await master.WriteSingleCoilAsync(1, loadPallet, true);
+                await master.WriteSingleCoilAsync(1, exitConveyor, true);
+
+                bool[] input = await master.ReadInputsAsync(1, entryTurn, 1);
+                bool enteredTurn = !input[0] && prevEntryTurn;
+                prevEntryTurn = input[0];
+
+
+                while (enteredTurn)
+                {
+                    bool[] input2 = await master.ReadInputsAsync(1, atFront, 1);
+                    bool fronted = input2[0];
+                    if (fronted)
+                    {
+                        await master.WriteSingleCoilAsync(1, turnLoad, false);
+                        await master.WriteSingleCoilAsync(1, exitConveyor, false);
+                        await master.WriteSingleCoilAsync(1, loadPallet, false);
+                        break;
+                    }
+                }
+
+                bool[] directions = await master.ReadInputsAsync(1, 8, 2);
+                bool toPallet = directions[0];
+                bool toCrane = directions[1];
+                if (enteredTurn && toPallet)
+                {
+
+                    await master.WriteSingleCoilAsync(1, turn, true);
+                    await Task.Delay(2000);
+                    await master.WriteSingleCoilAsync(1, turnLoad, true);
+                    await master.WriteSingleCoilAsync(1, craneEntry, true);
+                    await Task.Delay(3500);
+                    await master.WriteSingleCoilAsync(1, turn, false);
+                    await Task.Delay(2000);
+                }
+                else if (enteredTurn && toCrane)
+                {
+
+                    await master.WriteSingleCoilAsync(1, turn, false);
+                    await Task.Delay(2000);
+                    await master.WriteSingleCoilAsync(1, turnLoad, true);
+                    await master.WriteSingleCoilAsync(1, loadPallet, false);
+                    await master.WriteSingleCoilAsync(1, craneEntry, true);
+                    await Task.Delay(3500);
+                    await master.WriteSingleCoilAsync(1, turn, true);
+                    await Task.Delay(2000);
+                }
+                await Task.Delay(50);
+            }
+        }
+        public async Task EndProgram_2(CancellationToken token)
+        {
+
             if (client == null)
             {
                 Console.WriteLine("TCP client is not initialized.");
                 return;
             }
-
-            ushort loadPallet = 6;
-            ushort exitConveyor = 10;
-            ushort turnLoad = 11;
-            ushort turn = 13;
 
             ushort craneEntry = 14;
             ushort craneLoad = 15;
@@ -613,64 +647,18 @@ namespace ModbusTCP
             ushort craneUnload = 19;
             ushort removerConveyor = 20;
 
-            ushort entryTurn = 5;
-            ushort atFront = 6;
-            bool prevEntryTurn = true;
-            while (!token.IsCancellationRequested) {
+            await master.WriteSingleCoilAsync(1, craneUnload, true);
+            await master.WriteSingleCoilAsync(1, removerConveyor, true);
 
-                bool[] input = await master.ReadInputsAsync(1, entryTurn, 1);
-                bool enteredTurn = !input[0] && prevEntryTurn;
-                prevEntryTurn = input[0];
-
-                await master.WriteSingleCoilAsync(1, loadPallet, true);
-                await master.WriteSingleCoilAsync(1, exitConveyor, true);
-                await master.WriteSingleCoilAsync(1, turnLoad, true);
-                
-                while (enteredTurn)
-                {
-                    bool[] input2 = await master.ReadInputsAsync(1, atFront, 1);
-                    bool fronted = input2[0];
-                    if (fronted)
-                    {
-                        await master.WriteSingleCoilAsync(1, turnLoad, false);
-                        await master.WriteSingleCoilAsync(1, exitConveyor, false);
-                        break;
-                    }
-                }
-                
-
-                bool[] directions = await master.ReadInputsAsync(1, 8, 2);
-                bool toPallet = directions[0];
-                bool toCrane = directions[1];
-                if (enteredTurn && toPallet)
-                {
-                    await master.WriteSingleCoilAsync(1, turn, true);
-                    await Task.Delay(2000);
-                    await master.WriteSingleCoilAsync(1, turnLoad, true);
-                    await master.WriteSingleCoilAsync(1, craneEntry, true);
-                    await Task.Delay(3500);
-                    await master.WriteSingleCoilAsync(1, craneEntry, false);
-                    await master.WriteSingleCoilAsync(1, turn, false);
-                    await Task.Delay(2000);
-                }
-                else if (enteredTurn && toCrane)
-                {
-                    await master.WriteSingleCoilAsync(1, turn, false);
-                    await Task.Delay(2000);
-                    await master.WriteSingleCoilAsync(1, turnLoad, true);
-                    await master.WriteSingleCoilAsync(1, craneEntry, true);
-                    await Task.Delay(3500);
-                    await master.WriteSingleCoilAsync(1, craneEntry, false);
-                    await master.WriteSingleCoilAsync(1, turn, true);
-                    await Task.Delay(2000);
-                }
+            while (!token.IsCancellationRequested)
+            {
                 await master.WriteSingleCoilAsync(1, craneEntry, true);
                 await master.WriteSingleCoilAsync(1, craneLoad, true);
+
                 bool enteredCrane = false;
-                while (enteredTurn)
+                while (!token.IsCancellationRequested)
                 {
                     bool entryCrane = (await master.ReadInputsAsync(1, 10, 1))[0];
-
                     if (!entryCrane)
                     {
                         await master.WriteSingleCoilAsync(1, craneEntry, false);
@@ -680,11 +668,13 @@ namespace ModbusTCP
                     }
                     await Task.Delay(10);
                 }
-                Console.WriteLine($"enter crane : {enteredCrane}");
-                if (enteredCrane) {
+
+                if (enteredCrane)
+                {
                     await master.WriteSingleCoilAsync(1, craneLeft, true);
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneLift, true);
+                    await master.WriteSingleCoilAsync(1, craneLoad, true);
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneLeft, false);
                     await Task.Delay(1500);
@@ -695,15 +685,19 @@ namespace ModbusTCP
                     await master.WriteSingleCoilAsync(1, craneRight, false);
                     await Task.Delay(1500);
                 }
-                await master.WriteSingleCoilAsync(1, craneUnload, true);
-                await master.WriteSingleCoilAsync(1, removerConveyor, true);
-               
-            }
 
+                await Task.Delay(50);
+            }
+        }
+      
+        public async Task EndProgram(CancellationToken token) //must use async
+        {
+            Console.WriteLine("Ending program..." );
+            Task endingTask1 = EndProgram_1(token);
+            Task endingTask2 = EndProgram_2(token);
+            await Task.WhenAll(endingTask1, endingTask2);
 
         }
-
-
 
         public void StopProgram()
         {
