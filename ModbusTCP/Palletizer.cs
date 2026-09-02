@@ -169,34 +169,19 @@ namespace ModbusTCP
 
             while (!token.IsCancellationRequested && palletDone < maxPallet)
             {
-                //Console.WriteLine("Pallet Done: " + palletDone);
                 bool[] input = await master.ReadInputsAsync(1, palletAtEn, 1);
-                bool palletEnterd = false;
+                bool palletEnterd = !input[0];
                 bool palletLoadedNow = false;
+                await master.WriteSingleCoilAsync(1, loadPallet, true);
+                await master.WriteSingleCoilAsync(1, exitConveyor, true);
+                await master.WriteSingleCoilAsync(1, palletFeeder, true);
 
-                if (!input[0])
-                {
-                    palletEnterd = true;
-                }
-                
-                
                 if (palletEnterd) 
                 {
-                    if (!palletLoadedNow)
-                    {
-                        await master.WriteSingleCoilAsync(1, palletFeeder, true);
-                    }
                     Console.WriteLine("palletEnterd");
                     await Task.Delay(2000);
                     await master.WriteSingleCoilAsync(1, palletFeeder, false);
-                    await master.WriteSingleCoilAsync(1, loadPallet, true);
                 }
-                else
-                {
-                    await master.WriteSingleCoilAsync(1, palletFeeder, true);
-                }
-
-
 
                 while (palletEnterd && !token.IsCancellationRequested)
                 {
@@ -205,10 +190,6 @@ namespace ModbusTCP
                     if (input2[0])
                     {
                         palletLoadedNow = true;
-                    }
-
-                    if (palletLoadedNow)
-                    {
                         Console.WriteLine("pallet loaded");
                         await master.WriteSingleCoilAsync(1, loadPallet, false);
                         await master.WriteSingleCoilAsync(1, palletFeeder, false);
@@ -222,6 +203,7 @@ namespace ModbusTCP
                     Console.WriteLine("start elevator");
                     await Task.Delay(500);
                     await master.WriteSingleCoilAsync(1, elevatorUp, true);
+                    await master.WriteSingleCoilAsync(1, elevatorDown, false);
                     await Task.Delay(2000);
                     await master.WriteSingleCoilAsync(1, elevatorUp, false);
                     while (!token.IsCancellationRequested)
@@ -234,20 +216,19 @@ namespace ModbusTCP
                             await Task.Delay(2000);
                             await master.WriteSingleCoilAsync(1, openPlate, false);
                             await master.WriteSingleCoilAsync(1, elevatorDown, false);
-
+                            await master.WriteSingleCoilAsync(1, loadPallet, true);
                             break;
                         }
                         await Task.Delay(100);
                     }
-                    await master.WriteSingleCoilAsync(1, loadPallet, true);
-                    await master.WriteSingleCoilAsync(1, exitConveyor, true);
-                    await Task.Delay(3000);
+                    
+                    await Task.Delay(1500);
                 }
                 else
                 {
                     
                     await master.WriteSingleCoilAsync(1, elevatorUp, false);
-                    await master.WriteSingleCoilAsync(1, elevatorDown, false);
+                    await master.WriteSingleCoilAsync(1, elevatorDown, true);
                 }
 
                 await Task.Delay(40);
@@ -394,7 +375,7 @@ namespace ModbusTCP
             }
         }
 
-        public async Task CraneAsync(CancellationToken token, ushort targetPos = 0)
+        public async Task CraneAsync(CancellationToken token, ushort startPos = 0, ushort targetPos = 0, ushort amount = 0)
         {
             //coils address
             ushort craneLeft = 16;
@@ -402,13 +383,22 @@ namespace ModbusTCP
             ushort craneLift = 18;
             //holding register address
             ushort cranePos = 0;
-
+            ushort countAmount = 0;
             if (client == null)
             {
                 Console.WriteLine("TCP client is not initialized.");
                 return;
             }
-            
+
+            if (startPos != 0)
+            {
+                pos = startPos;
+            }
+            else if (targetPos != 0)
+            {
+                pos = targetPos;
+            }
+
             while (!token.IsCancellationRequested && pos < 55)
             {
                 bool entryCrane = (await master.ReadInputsAsync(1, 10, 1))[0];
@@ -423,7 +413,7 @@ namespace ModbusTCP
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneLeft, false);
                     craneLoadEmpty = true;
-                    await Task.Delay(1000);
+                    await Task.Delay(1500);
                     lifted = true;
                 }
                 else
@@ -433,68 +423,14 @@ namespace ModbusTCP
 
                 if (lifted)
                 {
-                    // Wait for final motion to start and stop (debounced)
-                    bool[] lastRead = null;
-                    int stableCount = 0;
-                    bool motionSeen = false;
-                    const int requiredStable = 3;
-                    const int motionStartTimeoutMs = 3000;
-
-                    DateTime cmdTime = DateTime.UtcNow;
-
                     craneReady = false;
                     lifted = false;
 
-                    //Pos equals targetPos if targetPos is not 0, otherwise increment pos by 1
-                    // determine movement target without causing immediate termination
-                    ushort movePos = targetPos != 0 ? targetPos : pos;
-                    pos = movePos; // update pos when we actually command the crane
                     Console.WriteLine($"Moving crane to position {pos}");
                     await master.WriteSingleRegisterAsync(1, cranePos, pos);
                     
                     Console.WriteLine("Crane moving to target position");
-                    while (!token.IsCancellationRequested)
-                    {
-                        bool[] movingXZ = await master.ReadInputsAsync(1, 11, 2);
-                        bool isMoving = movingXZ[0] || movingXZ[1];
-
-                        if (!motionSeen)
-                        {
-                            if (isMoving)
-                            {
-                                Console.WriteLine("motionSeen");
-                                motionSeen = true;
-                                stableCount = 0;
-                                lastRead = movingXZ;
-                            }
-                            else if ((DateTime.UtcNow - cmdTime).TotalMilliseconds > motionStartTimeoutMs)
-                            {
-                                Console.WriteLine("Warning: no final motion observed after command");
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            if (lastRead != null && movingXZ[0] == lastRead[0] && movingXZ[1] == lastRead[1])
-                            {
-                                stableCount++;
-                                //Console.WriteLine($"{stableCount}");
-                            }
-                            else
-                            {
-                                stableCount = 0;
-                            }
-                            lastRead = movingXZ;
-                            if (!isMoving && stableCount >= requiredStable)
-                            {
-                                Console.WriteLine("Crane Stopped moving (final)");
-                                break;
-                            }
-                        }
-
-                        await Task.Delay(100);
-                    }
-
+                    await checkingMovingCrane(token);
                     await master.WriteSingleCoilAsync(1, craneRight, true);
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneLift, false);
@@ -502,61 +438,26 @@ namespace ModbusTCP
                     await master.WriteSingleCoilAsync(1, craneRight, false);
                     await Task.Delay(1000);
 
-                    lastRead = null;
-                    stableCount = 0;
-                    motionSeen = false;
-
                     await master.WriteSingleRegisterAsync(1, cranePos, 55);
                     Console.WriteLine("Crane moving back to the origin");
-                    await Task.Delay(500);
-                    while (!token.IsCancellationRequested)
-                    {
-                        bool[] movingXZ = await master.ReadInputsAsync(1, 11, 2);
-                        bool isMoving = movingXZ[0] || movingXZ[1];
+                    await checkingMovingCrane(token);
 
-                        if (!motionSeen)
-                        {
-                            if (isMoving)
-                            {
-                                Console.WriteLine("motionSeen");
-                                motionSeen = true;
-                                stableCount = 0;
-                                lastRead = movingXZ;
-                            }
-                            else if ((DateTime.UtcNow - cmdTime).TotalMilliseconds > motionStartTimeoutMs)
-                            {
-                                Console.WriteLine("Warning: no final motion observed after command");
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            if (lastRead != null && movingXZ[0] == lastRead[0] && movingXZ[1] == lastRead[1])
-                            {
-                                stableCount++;
-                                //Console.WriteLine($"{stableCount}");
-                            }
-                            else
-                            {
-                                stableCount = 0;
-                            }
-                            lastRead = movingXZ;
-                            if (!isMoving && stableCount >= requiredStable)
-                            {
-                                Console.WriteLine("Crane Stopped moving (final)");
-                                break;
-                            }
-                        }
-                        await Task.Delay(100);
-
-                    }
                     // if a specific target was requested, stop the program after completing the requested move
                     if (targetPos != 0 && pos == targetPos)
                     {
                         status = false;
                         Reset();
-                        await Task.Delay(500);
-                        await EndProgram(token);
+                        await Task.Delay(100);
+                        return;
+                    }
+
+                    countAmount++;
+
+                    if (startPos != 0 && countAmount >= amount)
+                    {
+                        status = false;
+                        Reset();
+                        await Task.Delay(100);
                         return;
                     }
 
@@ -734,6 +635,102 @@ namespace ModbusTCP
             Reset();
             Console.WriteLine("Program ended.");
 
+        }
+
+        public async Task RemoveObject(CancellationToken token, ushort targetPos)
+        {
+            //coil address
+            ushort craneRight = 17;
+            ushort craneLift = 18;
+            ushort craneUnload = 19;
+            ushort removerConveyor = 20;
+            //holding register address
+            ushort cranePos = 0;
+
+            
+            await master.WriteSingleCoilAsync(1, craneUnload, true);
+            await master.WriteSingleCoilAsync(1, removerConveyor, true);
+
+            pos = targetPos; 
+            Console.WriteLine($"Moving crane to position {pos}");
+            await master.WriteSingleRegisterAsync(1, cranePos, pos);
+
+            Console.WriteLine("Crane moving to target position");
+            await checkingMovingCrane(token);
+
+            await master.WriteSingleCoilAsync(1, craneRight, true);
+            await Task.Delay(1500);
+            await master.WriteSingleCoilAsync(1, craneLift, true);
+            await Task.Delay(1500);
+            await master.WriteSingleCoilAsync(1, craneRight, false);
+            await Task.Delay(2500);
+
+            await master.WriteSingleRegisterAsync(1, cranePos, 55);
+            Console.WriteLine("Crane moving back to the origin");
+            await checkingMovingCrane(token);
+
+            await master.WriteSingleCoilAsync(1, craneRight, true);
+            await Task.Delay(1500);
+            await master.WriteSingleCoilAsync(1, craneLift, false);
+            await Task.Delay(1500);
+            await master.WriteSingleCoilAsync(1, craneRight, false);
+            await Task.Delay(3000);
+            Reset();
+
+        }
+
+        public async Task checkingMovingCrane(CancellationToken token)
+        {
+            // Wait for final motion to start and stop (debounced)
+            bool[] lastRead = null;
+            int stableCount = 0;
+            bool motionSeen = false;
+            const int requiredStable = 3;
+            const int motionStartTimeoutMs = 3000;
+
+            DateTime cmdTime = DateTime.UtcNow;
+
+            while (!token.IsCancellationRequested)
+            {
+                bool[] movingXZ = await master.ReadInputsAsync(1, 11, 2);
+                bool isMoving = movingXZ[0] || movingXZ[1];
+
+                if (!motionSeen)
+                {
+                    if (isMoving)
+                    {
+                        Console.WriteLine("motionSeen");
+                        motionSeen = true;
+                        stableCount = 0;
+                        lastRead = movingXZ;
+                    }
+                    else if ((DateTime.UtcNow - cmdTime).TotalMilliseconds > motionStartTimeoutMs)
+                    {
+                        Console.WriteLine("Warning: no final motion observed after command");
+                        break;
+                    }
+                }
+                else
+                {
+                    if (lastRead != null && movingXZ[0] == lastRead[0] && movingXZ[1] == lastRead[1])
+                    {
+                        stableCount++;
+                        //Console.WriteLine($"{stableCount}");
+                    }
+                    else
+                    {
+                        stableCount = 0;
+                    }
+                    lastRead = movingXZ;
+                    if (!isMoving && stableCount >= requiredStable)
+                    {
+                        Console.WriteLine("Crane Stopped moving (final)");
+                        break;
+                    }
+                }
+
+                await Task.Delay(100);
+            }
         }
 
         public void StopProgram()

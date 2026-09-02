@@ -247,7 +247,7 @@ namespace ModbusTCP
             base.OnFormClosed(e);
         }
 
-        private async void btnStartProgram2_Click(object sender, EventArgs e)
+        private async void btnStartFill_Click(object sender, EventArgs e)
         {
             _cts = new CancellationTokenSource();
             _palletizer = new Palletizer();
@@ -261,11 +261,11 @@ namespace ModbusTCP
             await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
         }
 
-        private void btnStop2_Click(object sender, EventArgs e)
+        private void btnStopFill_Click(object sender, EventArgs e)
         {
-            _cts?.Cancel();
             _palletizer?.StopProgram();
-
+            _cts?.Cancel();
+            
             _cts?.Dispose();
             _cts = null;
         }
@@ -281,11 +281,37 @@ namespace ModbusTCP
             Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token, 1);
             Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
             Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
-            Task _craneTask = _palletizer.CraneAsync(_cts.Token, targetPos);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token, targetPos : targetPos);
 
             await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
         }
 
-        
+        private async void btnRemover_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort targetPos = (ushort)targetPositionNum.Value;
+            Console.WriteLine($"Removing object in Position: {targetPos}");
+
+            await _palletizer.RemoveObject(_cts.Token, targetPos );
+        }
+
+        private async void btnAddMultiple_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort startPos = (ushort)startPositionNum.Value;
+            ushort amount = (ushort)amountNum.Value;
+            Console.WriteLine($"Start Position: {startPos} | Stop at {startPos+amount-1}");
+            Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, amount);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token, amount);
+            Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token, startPos: startPos, amount: amount);
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
+        }
     }
 }
