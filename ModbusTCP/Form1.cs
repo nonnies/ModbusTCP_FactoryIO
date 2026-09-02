@@ -269,5 +269,23 @@ namespace ModbusTCP
             _cts?.Dispose();
             _cts = null;
         }
+
+        private async void btnAdd_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort targetPos = (ushort) targetPositionNum.Value;
+            Console.WriteLine($"Target Position: {targetPos}");
+            Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, 1);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token, 1);
+            Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token, targetPos);
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
+        }
+
+        
     }
 }

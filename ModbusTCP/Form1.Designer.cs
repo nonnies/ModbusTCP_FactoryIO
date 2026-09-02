@@ -60,14 +60,14 @@
             this.label4 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label6 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnRemover = new System.Windows.Forms.Button();
             this.targetPositionNum = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.btnAdd = new System.Windows.Forms.Button();
             this.btnStop2 = new System.Windows.Forms.Button();
             this.btnStartProgram2 = new System.Windows.Forms.Button();
-            this.btnRemover = new System.Windows.Forms.Button();
-            this.label6 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -419,6 +419,15 @@
             this.tabPage3.Text = "Palletizer&Warehouse";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(42, 299);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(65, 12);
+            this.label6.TabIndex = 6;
+            this.label6.Text = "Fill Stock";
+            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.btnRemover);
@@ -431,6 +440,15 @@
             this.groupBox2.TabIndex = 5;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Add/Remove Stock";
+            // 
+            // btnRemover
+            // 
+            this.btnRemover.Location = new System.Drawing.Point(141, 110);
+            this.btnRemover.Name = "btnRemover";
+            this.btnRemover.Size = new System.Drawing.Size(75, 23);
+            this.btnRemover.TabIndex = 5;
+            this.btnRemover.Text = "Remove";
+            this.btnRemover.UseVisualStyleBackColor = true;
             // 
             // targetPositionNum
             // 
@@ -456,6 +474,7 @@
             this.btnAdd.TabIndex = 3;
             this.btnAdd.Text = "Add";
             this.btnAdd.UseVisualStyleBackColor = true;
+            this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
             // 
             // btnStop2
             // 
@@ -476,24 +495,6 @@
             this.btnStartProgram2.Text = "StartProgram";
             this.btnStartProgram2.UseVisualStyleBackColor = true;
             this.btnStartProgram2.Click += new System.EventHandler(this.btnStartProgram2_Click);
-            // 
-            // btnRemover
-            // 
-            this.btnRemover.Location = new System.Drawing.Point(141, 110);
-            this.btnRemover.Name = "btnRemover";
-            this.btnRemover.Size = new System.Drawing.Size(75, 23);
-            this.btnRemover.TabIndex = 5;
-            this.btnRemover.Text = "Remove";
-            this.btnRemover.UseVisualStyleBackColor = true;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(42, 299);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(65, 12);
-            this.label6.TabIndex = 6;
-            this.label6.Text = "Fill Stock";
             // 
             // Form1
             // 
