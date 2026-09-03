@@ -1,7 +1,7 @@
 ﻿using NModbus;
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ModbusTCP
 {
@@ -21,9 +22,46 @@ namespace ModbusTCP
         public bool craneReady = true;
         public bool craneLoadEmpty = true;
         public int palletDone = 0;
+        public int reduceAmount = 0;
+        private int maxPalletGlobal = 54;
         private readonly BlockingCollection<DateTime> _boxEvents = new BlockingCollection<DateTime>();
+        // bookkeeping for stock positions (index 1..54)
+        private static bool[] _stock = new bool[56]; // 0 unused, 1..54 valid
 
-        private async Task PollBoxSensorAsync(ushort boxAtEntry, CancellationToken token, int maxPallet)
+        public void CheckStock()
+        {
+            int countStock = 0;
+            Console.WriteLine("Current stock positions:");
+            for (int i = 1; i <= 54; i++)
+            {
+                Console.WriteLine($"Position {i}: {(_stock[i] ? "Occupied" : "Empty")}");
+                countStock = _stock[i] ? countStock + 1 : countStock;
+            }
+            Console.WriteLine($"Total occupied positions: {countStock}");
+            if (countStock >= 54)
+            {
+                MessageBox.Show("All stock positions are occupied. ", "Stock Full", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        // Record a drop at `position`. If already occupied notify user, otherwise mark occupied.
+        public void RegisterDrop(ushort position)
+        {
+            if (position < 1 || position >= _stock.Length) return;
+
+            if (_stock[position] == true)
+            {
+                Console.WriteLine($"Position {position} already has an object. Duplicate drop ignored.");
+            }
+            else
+            {
+                _stock[position] = true;
+                Console.WriteLine($"Object added at position {position}.");
+            }
+            //Console.WriteLine($"Stock positions 1-5: {_stock[0]}, {_stock[1]}, {_stock[2]}, {_stock[3]}, {_stock[4]}");
+        }
+
+        private async Task PollBoxSensorAsync(ushort boxAtEntry, CancellationToken token)
         {
             // initial previous state
             bool previous = true;
@@ -38,7 +76,7 @@ namespace ModbusTCP
             const int pollMs = 5;
             const int debounceMs = 50;
 
-            while (!token.IsCancellationRequested && palletDone < maxPallet)
+            while (!token.IsCancellationRequested && palletDone < maxPalletGlobal)
             {
                 try
                 {
@@ -63,6 +101,7 @@ namespace ModbusTCP
 
                 await Task.Delay(pollMs, token).ConfigureAwait(false);
             }
+            Console.WriteLine("PollBoxSensorAsync stopped.");
         }
         public async Task BoxFeederAsync(CancellationToken token, int maxPallet = 54)
         {
@@ -83,17 +122,16 @@ namespace ModbusTCP
             ushort countBox = 0;
             ushort countPush = 0;
             int boxMovingPollRate = 10;
-            
+            maxPalletGlobal = maxPallet;
 
             try
             {
                 Console.WriteLine("Start Running");
                 // start sensor poller that enqueues falling edges on the thread-pool
-                var pollTask = Task.Run(async () => await PollBoxSensorAsync(boxAtEntry, token, maxPallet));
+                var pollTask = Task.Run(async () => await PollBoxSensorAsync(boxAtEntry, token),token);
                 
-                while (!token.IsCancellationRequested && palletDone < maxPallet)
+                while (!token.IsCancellationRequested && palletDone < maxPalletGlobal)
                 {
-                    
                     // ensure actuators are enabled each cycle
                     await master.WriteSingleCoilAsync(1, boxFeeder, true);
                     await master.WriteSingleCoilAsync(1, loadBelt, true);
@@ -140,15 +178,24 @@ namespace ModbusTCP
                         readyToDrop = false;
                     }
 
+                    if (Interlocked.Exchange(ref reduceAmount, 0) == 1)
+                    {
+                        Interlocked.Exchange(ref reduceAmount, 0);
+                        Console.WriteLine($"maxPallet {maxPalletGlobal} - pos {pos} + 1 = ");
+                        maxPalletGlobal = maxPalletGlobal - pos + 1;
+                        Console.WriteLine("maxPallet reduced to: " + maxPalletGlobal);
+                    }
+
                     await Task.Delay(boxMovingPollRate);
                 }
+                Console.WriteLine("BoxFeederAsync stopped.");
             }
             catch (Exception ex) {
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        public async Task PalletFeederAsync(CancellationToken token, int maxPallet = 54)
+        public async Task PalletFeederAsync(CancellationToken token)
         {
             if (client == null)
             {
@@ -165,9 +212,8 @@ namespace ModbusTCP
             //input address
             ushort palletAtEn = 1;
             ushort palletLoaded = 2;
-            
 
-            while (!token.IsCancellationRequested && palletDone < maxPallet)
+            while (!token.IsCancellationRequested && palletDone < maxPalletGlobal)
             {
                 bool[] input = await master.ReadInputsAsync(1, palletAtEn, 1);
                 bool palletEnterd = !input[0];
@@ -233,6 +279,7 @@ namespace ModbusTCP
 
                 await Task.Delay(40);
             }
+            Console.WriteLine("PalletFeederAsync stopped.");
 
         }
 
@@ -426,6 +473,29 @@ namespace ModbusTCP
                     craneReady = false;
                     lifted = false;
 
+                    // find next free target starting from pos
+                    ushort newPos = pos;
+                    while (newPos <= 54 && _stock[newPos]) newPos++;
+                    
+                    if (newPos != pos)
+                    {
+                        pos = newPos;
+                        Console.WriteLine($"Pos now : {pos}");
+
+                        if (targetPos != 0)
+                        {
+                            targetPos = newPos;
+                        }
+                        Console.WriteLine($"targetpos : {targetPos}, startPos : {startPos}");
+                        if (targetPos == 0 && startPos == 0) 
+                        {
+                            Interlocked.Exchange(ref reduceAmount, 1);
+                            Console.WriteLine("reduceAmount set");
+                        }
+                        // Report the skip (from requested p to next free target)
+                        MessageBox.Show($"Position {pos} already occupied. Skipping to position {newPos}.", "FillStock", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+
                     Console.WriteLine($"Moving crane to position {pos}");
                     await master.WriteSingleRegisterAsync(1, cranePos, pos);
                     
@@ -436,6 +506,7 @@ namespace ModbusTCP
                     await master.WriteSingleCoilAsync(1, craneLift, false);
                     await Task.Delay(1500);
                     await master.WriteSingleCoilAsync(1, craneRight, false);
+                    RegisterDrop(pos);
                     await Task.Delay(1000);
 
                     await master.WriteSingleRegisterAsync(1, cranePos, 55);
@@ -445,6 +516,7 @@ namespace ModbusTCP
                     // if a specific target was requested, stop the program after completing the requested move
                     if (targetPos != 0 && pos == targetPos)
                     {
+                        targetPos = 0;
                         status = false;
                         Reset();
                         await Task.Delay(100);
@@ -455,6 +527,7 @@ namespace ModbusTCP
 
                     if (startPos != 0 && countAmount >= amount)
                     {
+                        startPos = 0;
                         status = false;
                         Reset();
                         await Task.Delay(100);
@@ -651,7 +724,9 @@ namespace ModbusTCP
             await master.WriteSingleCoilAsync(1, craneUnload, true);
             await master.WriteSingleCoilAsync(1, removerConveyor, true);
 
-            pos = targetPos; 
+            pos = targetPos;
+            _stock[pos] = false; // Mark the position as empty
+
             Console.WriteLine($"Moving crane to position {pos}");
             await master.WriteSingleRegisterAsync(1, cranePos, pos);
 

@@ -247,6 +247,7 @@ namespace ModbusTCP
             base.OnFormClosed(e);
         }
 
+        //Fill Stock
         private async void btnStartFill_Click(object sender, EventArgs e)
         {
             _cts = new CancellationTokenSource();
@@ -278,7 +279,7 @@ namespace ModbusTCP
             ushort targetPos = (ushort) targetPositionNum.Value;
             Console.WriteLine($"Target Position: {targetPos}");
             Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, 1);
-            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token, 1);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
             Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
             Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
             Task _craneTask = _palletizer.CraneAsync(_cts.Token, targetPos : targetPos);
@@ -306,7 +307,7 @@ namespace ModbusTCP
             ushort amount = (ushort)amountNum.Value;
             Console.WriteLine($"Start Position: {startPos} | Stop at {startPos+amount-1}");
             Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, amount);
-            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token, amount);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
             Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
             Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
             Task _craneTask = _palletizer.CraneAsync(_cts.Token, startPos: startPos, amount: amount);
