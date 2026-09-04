@@ -17,6 +17,8 @@ namespace ModbusTCP
     {
         public static TcpClient client;
         public static IModbusMaster master;
+        // Shared semaphore to serialize all master access
+        private static readonly SemaphoreSlim _modbusSemaphore = new SemaphoreSlim(1, 1);
         public static void ModbusTcpConnection(string action)
         {
             if (action == "START")
@@ -44,8 +46,16 @@ namespace ModbusTCP
             {
                 ushort startAddress = 0;
                 Console.WriteLine("Resetting the programm...");
-                master.WriteMultipleCoils(1, startAddress, Enumerable.Repeat(false, 20).ToArray()); // Assuming 12 coils to stop
-                master.WriteMultipleRegisters(1, startAddress, Enumerable.Repeat((ushort) 0, 20).ToArray());
+                _modbusSemaphore.Wait();
+                try
+                {
+                    master.WriteMultipleCoils(1, startAddress, Enumerable.Repeat(false, 20).ToArray());
+                    master.WriteMultipleRegisters(1, startAddress, Enumerable.Repeat((ushort)0, 20).ToArray());
+                }
+                finally
+                {
+                    _modbusSemaphore.Release();
+                }
             }
             else
             {
@@ -133,7 +143,92 @@ namespace ModbusTCP
                 return Array.Empty<ushort>();
             }
         }
-        
+
+        // Async-safe wrappers to be used across the codebase (serialize async access)
+        public static async Task<bool[]> ReadInputsAsyncSafe(byte slaveId, ushort startAddress, ushort numInputs)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await master.ReadInputsAsync(slaveId, startAddress, numInputs).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
+        public static async Task<ushort[]> ReadHoldingRegistersAsyncSafe(byte slaveId, ushort startAddress, ushort numRegisters)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await master.ReadHoldingRegistersAsync(slaveId, startAddress, numRegisters).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
+        public static async Task WriteSingleCoilAsyncSafe(byte slaveId, ushort address, bool value)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await master.WriteSingleCoilAsync(slaveId, address, value).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
+        public static async Task WriteSingleRegisterAsyncSafe(byte slaveId, ushort address, ushort value)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await master.WriteSingleRegisterAsync(slaveId, address, value).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
+        public static async Task WriteMultipleCoilsAsyncSafe(byte slaveId, ushort startAddress, bool[] data)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await master.WriteMultipleCoilsAsync(slaveId, startAddress, data).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
+        public static async Task WriteMultipleRegistersAsyncSafe(byte slaveId, ushort startAddress, ushort[] data)
+        {
+            if (client == null) throw new InvalidOperationException("TCP client is not initialized.");
+            await _modbusSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await master.WriteMultipleRegistersAsync(slaveId, startAddress, data).ConfigureAwait(false);
+            }
+            finally
+            {
+                _modbusSemaphore.Release();
+            }
+        }
+
     }
-    
 }
+    
