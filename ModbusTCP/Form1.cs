@@ -1,19 +1,23 @@
-﻿using System;
+﻿using NModbus;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using NModbus;
 
 namespace ModbusTCP
 {
 
     public partial class Form1 : Form
     {
+        // keep palletizer instance so we can stop it later
+        private Palletizer _palletizer = new Palletizer();
+        CancellationTokenSource _cts = new CancellationTokenSource();
         public Form1()
         {
             InitializeComponent();
@@ -30,7 +34,6 @@ namespace ModbusTCP
                 btnStart.BackColor = Color.Red;
                 lblStatus.Text = "Status : Running";
                 ModbusTcp.ModbusTcpConnection("START");
-
             }
             else
             {
@@ -242,6 +245,74 @@ namespace ModbusTCP
             // unsubscribe to avoid leaks
             Conveyor.CountUpdated -= ModbusTcp_CountUpdated;
             base.OnFormClosed(e);
+        }
+
+        //Fill Stock
+        private async void btnStartFill_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            Task _boxFeederTask =  _palletizer.BoxFeederAsync(_cts.Token);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
+            Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token); 
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
+        }
+
+        private void btnStopFill_Click(object sender, EventArgs e)
+        {
+            _palletizer?.StopProgram();
+            _cts?.Cancel();
+            
+            _cts?.Dispose();
+            _cts = null;
+        }
+
+        private async void btnAdd_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort targetPos = (ushort) targetPositionNum.Value;
+            Console.WriteLine($"Target Position: {targetPos}");
+            Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, 1);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
+            Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token, targetPos : targetPos);
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
+        }
+
+        private async void btnRemover_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort targetPos = (ushort)targetPositionNum.Value;
+            Console.WriteLine($"Removing object in Position: {targetPos}");
+
+            await _palletizer.RemoveObject(_cts.Token, targetPos );
+        }
+
+        private async void btnAddMultiple_Click(object sender, EventArgs e)
+        {
+            _cts = new CancellationTokenSource();
+            _palletizer = new Palletizer();
+
+            ushort startPos = (ushort)startPositionNum.Value;
+            ushort amount = (ushort)amountNum.Value;
+            Console.WriteLine($"Start Position: {startPos} | Stop at {startPos+amount-1}");
+            Task _boxFeederTask = _palletizer.BoxFeederAsync(_cts.Token, amount);
+            Task _palletFeederTask = _palletizer.PalletFeederAsync(_cts.Token);
+            Task _turnableTask = _palletizer.TurnableAsync(_cts.Token);
+            Task _entryCraneTask = _palletizer.CraneEntryAsync(_cts.Token);
+            Task _craneTask = _palletizer.CraneAsync(_cts.Token, startPos: startPos, amount: amount);
+
+            await Task.WhenAll(_boxFeederTask, _palletFeederTask, _turnableTask, _craneTask, _entryCraneTask);
         }
     }
 }

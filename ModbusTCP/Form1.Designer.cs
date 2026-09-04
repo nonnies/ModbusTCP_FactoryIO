@@ -59,11 +59,32 @@
             this.lblCount = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label6 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnRemover = new System.Windows.Forms.Button();
+            this.targetPositionNum = new System.Windows.Forms.NumericUpDown();
+            this.label5 = new System.Windows.Forms.Label();
+            this.btnAdd = new System.Windows.Forms.Button();
+            this.btnStopFill = new System.Windows.Forms.Button();
+            this.btnStartFill = new System.Windows.Forms.Button();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.startPositionNum = new System.Windows.Forms.NumericUpDown();
+            this.label7 = new System.Windows.Forms.Label();
+            this.btnAddMultiple = new System.Windows.Forms.Button();
+            this.amountNum = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.targetPositionNum)).BeginInit();
+            this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.startPositionNum)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.amountNum)).BeginInit();
             this.SuspendLayout();
             // 
             // btnStart
@@ -326,6 +347,7 @@
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(1, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -342,7 +364,7 @@
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(637, 448);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.Text = "Read/Write";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabPage2
@@ -357,14 +379,14 @@
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(637, 448);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.Text = "Assembler";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // lblCount
             // 
             this.lblCount.AutoSize = true;
             this.lblCount.Font = new System.Drawing.Font("SimSun", 12F);
-            this.lblCount.Location = new System.Drawing.Point(98, 16);
+            this.lblCount.Location = new System.Drawing.Point(334, 122);
             this.lblCount.Name = "lblCount";
             this.lblCount.Size = new System.Drawing.Size(15, 16);
             this.lblCount.TabIndex = 15;
@@ -374,7 +396,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("SimSun", 12F);
-            this.label4.Location = new System.Drawing.Point(29, 16);
+            this.label4.Location = new System.Drawing.Point(265, 122);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(63, 16);
             this.label4.TabIndex = 14;
@@ -391,6 +413,155 @@
             this.btnStop.Text = "Stop";
             this.btnStop.UseVisualStyleBackColor = false;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.groupBox3);
+            this.tabPage3.Controls.Add(this.label6);
+            this.tabPage3.Controls.Add(this.groupBox2);
+            this.tabPage3.Controls.Add(this.btnStopFill);
+            this.tabPage3.Controls.Add(this.btnStartFill);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(637, 448);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Palletizer&Warehouse";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(42, 299);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(65, 12);
+            this.label6.TabIndex = 6;
+            this.label6.Text = "Fill Stock";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.btnRemover);
+            this.groupBox2.Controls.Add(this.targetPositionNum);
+            this.groupBox2.Controls.Add(this.label5);
+            this.groupBox2.Controls.Add(this.btnAdd);
+            this.groupBox2.Location = new System.Drawing.Point(49, 39);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(241, 187);
+            this.groupBox2.TabIndex = 5;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Add/Remove an Object";
+            // 
+            // btnRemover
+            // 
+            this.btnRemover.Location = new System.Drawing.Point(141, 110);
+            this.btnRemover.Name = "btnRemover";
+            this.btnRemover.Size = new System.Drawing.Size(75, 23);
+            this.btnRemover.TabIndex = 5;
+            this.btnRemover.Text = "Remove";
+            this.btnRemover.UseVisualStyleBackColor = true;
+            this.btnRemover.Click += new System.EventHandler(this.btnRemover_Click);
+            // 
+            // targetPositionNum
+            // 
+            this.targetPositionNum.Location = new System.Drawing.Point(34, 68);
+            this.targetPositionNum.Name = "targetPositionNum";
+            this.targetPositionNum.Size = new System.Drawing.Size(49, 21);
+            this.targetPositionNum.TabIndex = 2;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(34, 44);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(95, 12);
+            this.label5.TabIndex = 4;
+            this.label5.Text = "Target Position";
+            // 
+            // btnAdd
+            // 
+            this.btnAdd.Location = new System.Drawing.Point(34, 110);
+            this.btnAdd.Name = "btnAdd";
+            this.btnAdd.Size = new System.Drawing.Size(75, 23);
+            this.btnAdd.TabIndex = 3;
+            this.btnAdd.Text = "Add";
+            this.btnAdd.UseVisualStyleBackColor = true;
+            this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
+            // 
+            // btnStopFill
+            // 
+            this.btnStopFill.Location = new System.Drawing.Point(194, 320);
+            this.btnStopFill.Name = "btnStopFill";
+            this.btnStopFill.Size = new System.Drawing.Size(113, 47);
+            this.btnStopFill.TabIndex = 1;
+            this.btnStopFill.Text = "Stop";
+            this.btnStopFill.UseVisualStyleBackColor = true;
+            this.btnStopFill.Click += new System.EventHandler(this.btnStopFill_Click);
+            // 
+            // btnStartFill
+            // 
+            this.btnStartFill.Location = new System.Drawing.Point(42, 320);
+            this.btnStartFill.Name = "btnStartFill";
+            this.btnStartFill.Size = new System.Drawing.Size(113, 47);
+            this.btnStartFill.TabIndex = 0;
+            this.btnStartFill.Text = "Start";
+            this.btnStartFill.UseVisualStyleBackColor = true;
+            this.btnStartFill.Click += new System.EventHandler(this.btnStartFill_Click);
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.label8);
+            this.groupBox3.Controls.Add(this.amountNum);
+            this.groupBox3.Controls.Add(this.btnAddMultiple);
+            this.groupBox3.Controls.Add(this.label7);
+            this.groupBox3.Controls.Add(this.startPositionNum);
+            this.groupBox3.Location = new System.Drawing.Point(337, 39);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(239, 187);
+            this.groupBox3.TabIndex = 7;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Add Multiple Object";
+            // 
+            // startPositionNum
+            // 
+            this.startPositionNum.Location = new System.Drawing.Point(32, 53);
+            this.startPositionNum.Name = "startPositionNum";
+            this.startPositionNum.Size = new System.Drawing.Size(49, 21);
+            this.startPositionNum.TabIndex = 3;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(30, 29);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(89, 12);
+            this.label7.TabIndex = 6;
+            this.label7.Text = "Start Position";
+            // 
+            // btnAddMultiple
+            // 
+            this.btnAddMultiple.Location = new System.Drawing.Point(146, 147);
+            this.btnAddMultiple.Name = "btnAddMultiple";
+            this.btnAddMultiple.Size = new System.Drawing.Size(75, 23);
+            this.btnAddMultiple.TabIndex = 6;
+            this.btnAddMultiple.Text = "Add";
+            this.btnAddMultiple.UseVisualStyleBackColor = true;
+            this.btnAddMultiple.Click += new System.EventHandler(this.btnAddMultiple_Click);
+            // 
+            // amountNum
+            // 
+            this.amountNum.Location = new System.Drawing.Point(32, 110);
+            this.amountNum.Name = "amountNum";
+            this.amountNum.Size = new System.Drawing.Size(49, 21);
+            this.amountNum.TabIndex = 8;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(30, 89);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(41, 12);
+            this.label8.TabIndex = 9;
+            this.label8.Text = "Amount";
             // 
             // Form1
             // 
@@ -410,6 +581,15 @@
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
+            this.tabPage3.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.targetPositionNum)).EndInit();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.startPositionNum)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.amountNum)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -447,6 +627,21 @@
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label lblCount;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.Button btnStartFill;
+        private System.Windows.Forms.Button btnStopFill;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnAdd;
+        private System.Windows.Forms.NumericUpDown targetPositionNum;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button btnRemover;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.NumericUpDown amountNum;
+        private System.Windows.Forms.Button btnAddMultiple;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.NumericUpDown startPositionNum;
+        private System.Windows.Forms.Label label8;
     }
 }
 
